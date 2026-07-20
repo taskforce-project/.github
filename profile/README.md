@@ -12,7 +12,6 @@
   <img src="https://img.shields.io/badge/backend-Java%2021%20·%20Spring%20Boot-111827?style=flat-square" alt="Backend" />
   <img src="https://img.shields.io/badge/frontend-Next.js%20·%20TypeScript-111827?style=flat-square" alt="Frontend" />
   <img src="https://img.shields.io/badge/infra-Docker%20·%20Keycloak%20·%20PostgreSQL-111827?style=flat-square" alt="Infra" />
-  <img src="https://img.shields.io/badge/core-open%20source-16a34a?style=flat-square" alt="Open source" />
 </p>
 
 <p align="center">
@@ -162,32 +161,36 @@ shipped outcomes.**
 
 ## Architecture
 
-A multi-tenant monorepo. Spring Boot backend on Clean Architecture, Next.js frontend,
-identity delegated to Keycloak, an AI layer wired directly into the backend, and the
-supporting platform (data, messaging, object storage) behind an Nginx gateway.
+A multi-tenant monorepo. A Spring Boot backend on Clean Architecture, a Next.js frontend,
+identity delegated to Keycloak, an AI layer wired into the backend, and the supporting
+platform — data, cache, messaging, object storage — behind an Nginx gateway, with
+end-to-end observability and security scanning baked into the delivery pipeline.
 
 ```mermaid
 flowchart TB
     U([User]) --> FE["Next.js 16 · React 19<br/>TypeScript"]
     LP["Astro landing"] -.-> U
-
-    FE --> GW["Nginx"]
+    FE --> GW["Nginx · TLS<br/>reverse proxy"]
     GW --> API["Spring Boot 4 · Java 21<br/>Clean Architecture · multi-tenant"]
 
-    API --> AUTH["Keycloak<br/>OAuth2 / OIDC"]
+    API --> AUTH["Keycloak<br/>OAuth2 / OIDC · RBAC"]
+    API --> RL["Redis<br/>rate limiting"]
     API --> AI["AI layer<br/>Smart Assign · Insights · Assistant"]
 
-    subgraph PLATFORM ["Platform"]
-        DB[("PostgreSQL")]
+    subgraph DATA ["Data & messaging"]
+        PG[("PostgreSQL<br/>+ pgvector")]
         MQ["RabbitMQ"]
-        OBJ[("MinIO")]
+        OBJ[("MinIO · S3")]
     end
-
-    API --> DB
+    API --> PG
     API --> MQ
     API --> OBJ
+
+    AI --> SVC["ai-service<br/>Python"]
     AI --> MCP["MCP server"]
     AI --> LLM["LLM"]
+
+    API -. OpenTelemetry .-> OBS["SigNoz<br/>traces · metrics · logs"]
 
     style API fill:#111827,color:#fff
     style AI fill:#7c3aed,color:#fff
@@ -198,14 +201,15 @@ flowchart TB
 
 | Layer | Technology |
 | --- | --- |
-| **Backend** | Java 21, Spring Boot 4, Clean Architecture, REST API |
+| **Backend** | Java 21, Spring Boot 4, Clean Architecture, multi-tenant, REST |
 | **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS |
 | **Landing** | Astro |
-| **AI** | In-backend orchestration (LLM), MCP server |
-| **Identity** | Keycloak (OAuth2 / OIDC, RBAC) |
-| **Data & messaging** | PostgreSQL, RabbitMQ, MinIO |
-| **Delivery** | Docker Compose, GitHub Actions, GHCR, Nginx |
-| **Quality** | JUnit, Jest, Playwright, OWASP ZAP |
+| **AI** | LLM orchestration, Python `ai-service`, MCP server, pgvector embeddings |
+| **Identity** | Keycloak — OAuth2 / OIDC, RBAC |
+| **Data** | PostgreSQL (+ pgvector), Redis, MinIO (S3), RabbitMQ |
+| **Observability** | OpenTelemetry → SigNoz (ClickHouse) — traces, metrics, logs |
+| **Security** | OWASP ZAP (DAST), Trivy & Semgrep (SAST), distributed rate limiting |
+| **Delivery** | Docker Compose (dev / prod / tools), GitHub Actions, GHCR, Nginx, Render |
 
 ---
 
@@ -213,27 +217,30 @@ flowchart TB
 
 | Repo | What's inside |
 | --- | --- |
-| **[taskforce-fullstack](https://github.com/taskforce-project/taskforce-fullstack)** | The product monorepo — backend, frontend, landing, MCP server, and the full infra (Keycloak, RabbitMQ, Nginx, observability, CI). |
-| **[taskforce-docs](https://github.com/taskforce-project/taskforce-docs)** | The **Brain OS** documentation vault — architecture, ADRs, API contracts, runbooks, security, and R&D notes. An engineering knowledge base, versioned as an Obsidian vault. |
+| **[taskforce-docs](https://github.com/taskforce-project/taskforce-docs)** · public | The **Brain OS** documentation vault — architecture, ADRs, API contracts, runbooks, security and R&D. An engineering knowledge base, versioned as an Obsidian vault. |
+| **taskforce-fullstack** · 🔒 private | The product monorepo. The code is kept private; its architecture is documented above and in the docs vault. |
+
+How the monorepo is organized:
 
 ```
 taskforce-fullstack/
 ├─ backend/          Spring Boot API (Java 21, Clean Architecture)
 ├─ frontend/         Next.js 16 app (React 19, TypeScript)
 ├─ landing-page/     Astro marketing site
+├─ ai-service/       Python AI service
 ├─ taskforce-mcp/    Model Context Protocol server
 ├─ keycloak/         Identity & access management
-├─ nginx/            Reverse proxy / gateway
-├─ observability/    Metrics & monitoring
+├─ nginx/            Reverse proxy / TLS gateway
+├─ observability/    OpenTelemetry + SigNoz
 ├─ rabbitmq/         Async messaging
-├─ security-reports/ OWASP ZAP scans
+├─ security-reports/ OWASP ZAP / Trivy / Semgrep
 ├─ scripts/          Tooling & automation
-└─ docker-compose.*  One-command local stack
+└─ docker-compose.{dev,prod,tools}.yml
 ```
 
-> **Brain OS (R&D)** — the research arm behind TaskForce: a persistent-memory
-> architecture for LLM agents (knowledge graph + vector search) and a *world model* that
-> represents the consequences of an agent's actions. Currently private.
+> **Brain OS (R&D)** — the research arm behind TaskForce: a persistent-memory architecture
+> for LLM agents (knowledge graph + vector search) and a *world model* that represents the
+> consequences of an agent's actions. Private.
 
 ---
 
@@ -242,7 +249,9 @@ taskforce-fullstack/
 - **Clean Architecture** and a multi-tenant domain model from the start.
 - **Documentation as a system**, not an afterthought — an AI-assisted, human-reviewed
   knowledge vault where every technical claim is traced back to the code.
-- **Security by default** — OAuth2/OIDC via Keycloak, RBAC, automated OWASP scans.
+- **Security by default** — OAuth2/OIDC via Keycloak, RBAC, rate limiting, and automated
+  DAST/SAST scanning (OWASP ZAP, Trivy, Semgrep) in the pipeline.
+- **Observability built in** — OpenTelemetry traces, metrics and logs, collected in SigNoz.
 - **Reproducible delivery** — the whole stack comes up with a single `docker compose`.
 
 ---
