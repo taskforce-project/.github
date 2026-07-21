@@ -7,8 +7,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-beta-f59e0b?style=flat-square" alt="Beta" />
-  <img src="https://img.shields.io/badge/backend-Java%2021%20·%20Spring%20Boot-111827?style=flat-square" alt="Backend" />
-  <img src="https://img.shields.io/badge/frontend-Next.js%20·%20TypeScript-111827?style=flat-square" alt="Frontend" />
+  <img src="https://img.shields.io/badge/backend-Java%2021%20·%20Spring%20Boot%204-111827?style=flat-square" alt="Backend" />
+  <img src="https://img.shields.io/badge/frontend-Next.js%2016%20·%20React%2019-111827?style=flat-square" alt="Frontend" />
   <img src="https://img.shields.io/badge/infra-Docker%20·%20Keycloak%20·%20PostgreSQL-111827?style=flat-square" alt="Infra" />
 </p>
 
@@ -69,57 +69,133 @@ intent into shipped outcomes.**
 
 ---
 
-## Architecture
+## System architecture
 
-A multi-tenant monorepo. A Spring Boot backend on Clean Architecture, a Next.js frontend,
-identity delegated to Keycloak, an AI layer wired into the backend, and the supporting
-platform — data, cache, messaging, object storage — behind an Nginx gateway, with
-end-to-end observability and security scanning baked into the delivery pipeline.
+A multi-tenant monorepo. Identity is delegated to Keycloak; the frontend talks to the API
+over REST with a bearer JWT for commands and over **WebSocket/STOMP** for anything
+real-time, with RabbitMQ acting as the STOMP relay. AI runs **inside the Java backend**
+(no separate inference service), and every request is traced end-to-end through
+OpenTelemetry.
 
 ```mermaid
 flowchart TB
-    U([User]) --> FE["Next.js 16 · React 19<br/>TypeScript"]
-    LP["Astro landing"] -.-> U
-    FE --> GW["Nginx · TLS<br/>reverse proxy"]
-    GW --> API["Spring Boot 4 · Java 21<br/>Clean Architecture · multi-tenant"]
+    U(["Browser"])
 
-    API --> AUTH["Keycloak<br/>OAuth2 / OIDC · RBAC"]
-    API --> RL["Redis<br/>rate limiting"]
-    API --> AI["AI layer<br/>Smart Assign · Insights · Assistant"]
-
-    subgraph DATA ["Data & messaging"]
-        PG[("PostgreSQL<br/>+ pgvector")]
-        MQ["RabbitMQ"]
-        OBJ[("MinIO · S3")]
+    subgraph APP ["Application"]
+        LAND["Landing<br/>Astro 5"]
+        FE["Frontend<br/>Next.js 16 · React 19 · TS"]
+        API["Backend API<br/>Spring Boot 4 · Java 21<br/>Clean Architecture · multi-tenant"]
     end
-    API --> PG
-    API --> MQ
-    API --> OBJ
 
-    AI --> SVC["ai-service<br/>Python"]
-    AI --> MCP["MCP server"]
-    AI --> LLM["LLM"]
+    NGX["Nginx · TLS<br/>reverse proxy (prod)"]
+    KC["Keycloak<br/>OIDC · JWT · RBAC"]
 
-    API -. OpenTelemetry .-> OBS["SigNoz<br/>traces · metrics · logs"]
+    subgraph DATA ["Data & state"]
+        PG[("PostgreSQL 18<br/>+ pgvector")]
+        RDS["Redis<br/>rate limiting"]
+        S3[("MinIO · S3")]
+        RMQ["RabbitMQ<br/>STOMP relay"]
+    end
+
+    subgraph EXT ["Third parties"]
+        GROQ["Groq · LLM"]
+        STRIPE["Stripe"]
+        OAUTH["GitHub / Slack"]
+        SMTP["SMTP"]
+    end
+
+    OBS["SigNoz<br/>traces · metrics · logs"]
+
+    U -->|HTTPS| LAND
+    U -->|HTTPS| NGX
+    NGX --> FE
+    FE -->|"REST /api/** · Bearer JWT"| API
+    FE <-->|"WebSocket · STOMP"| API
+    FE -->|OIDC login| KC
+
+    API -->|"OIDC · admin"| KC
+    API -->|JDBC| PG
+    API --> RDS
+    API -->|"S3 objects"| S3
+    API <-->|STOMP| RMQ
+    API -->|LLM| GROQ
+    API -->|"payments · webhooks"| STRIPE
+    API -->|OAuth| OAUTH
+    API -->|email| SMTP
+    API -. OTLP .-> OBS
 
     style API fill:#111827,color:#fff
-    style AI fill:#7c3aed,color:#fff
     style FE fill:#0ea5e9,color:#fff
+    style KC fill:#7c3aed,color:#fff
 ```
 
 ### Stack
 
 | Layer | Technology |
 | --- | --- |
-| **Backend** | Java 21, Spring Boot 4, Clean Architecture, multi-tenant, REST |
+| **Backend** | Java 21, Spring Boot 4, Clean Architecture, multi-tenant, REST + WebSocket/STOMP |
 | **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS |
-| **Landing** | Astro |
-| **AI** | LLM orchestration, Python `ai-service`, MCP server, pgvector embeddings |
-| **Identity** | Keycloak — OAuth2 / OIDC, RBAC |
-| **Data** | PostgreSQL (+ pgvector), Redis, MinIO (S3), RabbitMQ |
-| **Observability** | OpenTelemetry → SigNoz (ClickHouse) — traces, metrics, logs |
+| **Landing** | Astro 5 |
+| **AI** | In-backend LLM orchestration (Groq), MCP server, pgvector embeddings |
+| **Identity** | Keycloak — OIDC, JWT, RBAC |
+| **Data** | PostgreSQL 18 + pgvector, Redis, MinIO (S3), RabbitMQ (STOMP relay) |
+| **Third parties** | Stripe, GitHub / Slack OAuth, SMTP |
+| **Observability** | OpenTelemetry → SigNoz (ClickHouse) |
 | **Security** | OWASP ZAP (DAST), Trivy & Semgrep (SAST), distributed rate limiting |
 | **Delivery** | Docker Compose (dev / prod / tools), GitHub Actions, GHCR, Nginx, Render |
+
+---
+
+## Delivery pipeline
+
+Every pull request runs the full quality gate — including **end-to-end tests against a
+real Docker stack**, not mocks.
+
+```mermaid
+flowchart LR
+    PR["Commit · Pull request"] --> CI{{"GitHub Actions"}}
+
+    CI --> BT["Backend<br/>JUnit · JaCoCo"]
+    CI --> FT["Frontend<br/>ESLint · Jest"]
+    CI --> E2E["E2E · Playwright<br/>full Docker stack + seed"]
+    CI --> SEC["Security<br/>Trivy · Semgrep · OWASP ZAP"]
+
+    BT --> COV["Codecov"]
+    BT --> REL
+    FT --> REL
+    E2E --> REL
+    SEC --> REL["Release<br/>versioning · changelog"]
+
+    REL --> IMG["GHCR<br/>container images"]
+    IMG --> PROD["docker compose prod<br/>Render"]
+
+    style CI fill:#111827,color:#fff
+    style SEC fill:#b91c1c,color:#fff
+    style PROD fill:#16a34a,color:#fff
+```
+
+---
+
+## How the project is run
+
+Three repositories, one loop: the product generates reality, the knowledge base captures
+and challenges it, and the studio turns it into narrative.
+
+```mermaid
+flowchart LR
+    CODE["<b>taskforce-fullstack</b><br/>product · code · CI · infra"]
+    DOCS["<b>taskforce-docs</b><br/>Brain OS · architecture<br/>ADR · runbooks · R&D"]
+    MOTION["<b>taskforce-motion</b><br/>studio · capture → strategy<br/>→ narrative → Remotion → channels"]
+
+    CODE -->|"product reality"| DOCS
+    DOCS -->|"decisions · contracts · specs"| CODE
+    CODE -->|"screenshots · flows"| MOTION
+    DOCS -->|"positioning · ICP"| MOTION
+
+    style CODE fill:#111827,color:#fff
+    style DOCS fill:#0ea5e9,color:#fff
+    style MOTION fill:#7c3aed,color:#fff
+```
 
 ---
 
@@ -127,8 +203,9 @@ flowchart TB
 
 | Repo | What's inside |
 | --- | --- |
-| **[taskforce-docs](https://github.com/taskforce-project/taskforce-docs)** · public | The **Brain OS** documentation vault — architecture, ADRs, API contracts, runbooks, security and R&D. An engineering knowledge base, versioned as an Obsidian vault. |
+| **[taskforce-docs](https://github.com/taskforce-project/taskforce-docs)** · public | The **Brain OS** documentation vault — architecture (incl. C4 and UML), ADRs, API contracts, data model, runbooks, security and R&D. An engineering knowledge base, versioned as an Obsidian vault. |
 | **taskforce-fullstack** · 🔒 private | The product monorepo. The code is kept private; its architecture is documented above and in the docs vault. |
+| **taskforce-motion** · 🔒 private | **TaskForce Studio** — a marketing and motion OS, not a Remotion project: product capture feeds strategy, strategy drives narrative, Remotion is only the execution engine. No asset without a marketing hypothesis. |
 
 How the monorepo is organized:
 
@@ -137,12 +214,11 @@ taskforce-fullstack/
 ├─ backend/          Spring Boot API (Java 21, Clean Architecture)
 ├─ frontend/         Next.js 16 app (React 19, TypeScript)
 ├─ landing-page/     Astro marketing site
-├─ ai-service/       Python AI service
 ├─ taskforce-mcp/    Model Context Protocol server
 ├─ keycloak/         Identity & access management
 ├─ nginx/            Reverse proxy / TLS gateway
 ├─ observability/    OpenTelemetry + SigNoz
-├─ rabbitmq/         Async messaging
+├─ rabbitmq/         STOMP relay for realtime
 ├─ security-reports/ OWASP ZAP / Trivy / Semgrep
 ├─ scripts/          Tooling & automation
 └─ docker-compose.{dev,prod,tools}.yml
@@ -150,7 +226,7 @@ taskforce-fullstack/
 
 > **Brain OS (R&D)** — the research arm behind TaskForce: a persistent-memory architecture
 > for LLM agents (knowledge graph + vector search) and a *world model* that represents the
-> consequences of an agent's actions. Private.
+> consequences of an agent's actions.
 
 ---
 
@@ -158,10 +234,12 @@ taskforce-fullstack/
 
 - **Clean Architecture** and a multi-tenant domain model from the start.
 - **Documentation as a system**, not an afterthought — an AI-assisted, human-reviewed
-  knowledge vault where every technical claim is traced back to the code.
-- **Security by default** — OAuth2/OIDC via Keycloak, RBAC, rate limiting, and automated
-  DAST/SAST scanning (OWASP ZAP, Trivy, Semgrep) in the pipeline.
+  knowledge vault where every technical claim is traced back to the code, and divergence
+  between docs and code is flagged rather than hidden.
+- **Security by default** — OIDC/JWT via Keycloak, RBAC, distributed rate limiting, and
+  automated DAST/SAST scanning (OWASP ZAP, Trivy, Semgrep).
 - **Observability built in** — OpenTelemetry traces, metrics and logs, collected in SigNoz.
+- **Tested against reality** — E2E runs Playwright against the full dockerized stack.
 - **Reproducible delivery** — the whole stack comes up with a single `docker compose`.
 
 ---
