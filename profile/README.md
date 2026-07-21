@@ -73,9 +73,9 @@ intent into shipped outcomes.**
 
 A multi-tenant monorepo. Identity is delegated to Keycloak; the frontend talks to the API
 over REST with a bearer JWT for commands and over **WebSocket/STOMP** for anything
-real-time, with RabbitMQ acting as the STOMP relay. AI runs **inside the Java backend**
-(no separate inference service), and every request is traced end-to-end through
-OpenTelemetry.
+real-time, with RabbitMQ acting as the STOMP relay. **Inference is self-hosted**: the API
+talks to an AI gateway that routes to a local Ollama runtime — no third-party LLM, no data
+leaving the machine. Every request is traced end-to-end through OpenTelemetry.
 
 ```mermaid
 flowchart TB
@@ -85,6 +85,7 @@ flowchart TB
         LAND["Landing<br/>Astro 5"]
         FE["Frontend<br/>Next.js 16 · React 19 · TS"]
         API["Backend API<br/>Spring Boot 4 · Java 21<br/>Clean Architecture · multi-tenant"]
+        AIGW["ai-service<br/>AI gateway · FastAPI"]
     end
 
     NGX["Nginx · TLS<br/>reverse proxy (prod)"]
@@ -97,10 +98,11 @@ flowchart TB
         RMQ["RabbitMQ<br/>STOMP relay"]
     end
 
+    OLLAMA["Ollama · self-hosted<br/>Qwen3 14B / 8B · BGE-M3"]
+
     subgraph EXT ["Third parties"]
-        GROQ["Groq · LLM"]
         STRIPE["Stripe"]
-        OAUTH["GitHub / Slack"]
+        GH["GitHub OAuth"]
         SMTP["SMTP"]
     end
 
@@ -113,20 +115,24 @@ flowchart TB
     FE <-->|"WebSocket · STOMP"| API
     FE -->|OIDC login| KC
 
-    API -->|"OIDC · admin"| KC
+    API -->|"OIDC · JWT"| KC
     API -->|JDBC| PG
     API --> RDS
     API -->|"S3 objects"| S3
     API <-->|STOMP| RMQ
-    API -->|LLM| GROQ
+    API -->|"chat · embeddings"| AIGW
+    AIGW -->|"local inference"| OLLAMA
+    AIGW -->|"BGE-M3 vectors"| PG
     API -->|"payments · webhooks"| STRIPE
-    API -->|OAuth| OAUTH
+    API -->|OAuth| GH
     API -->|email| SMTP
     API -. OTLP .-> OBS
 
     style API fill:#111827,color:#fff
     style FE fill:#0ea5e9,color:#fff
     style KC fill:#7c3aed,color:#fff
+    style AIGW fill:#7c3aed,color:#fff
+    style OLLAMA fill:#16a34a,color:#fff
 ```
 
 ### Stack
@@ -136,10 +142,10 @@ flowchart TB
 | **Backend** | Java 21, Spring Boot 4, Clean Architecture, multi-tenant, REST + WebSocket/STOMP |
 | **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS |
 | **Landing** | Astro 5 |
-| **AI** | In-backend LLM orchestration (Groq), MCP server, pgvector embeddings |
+| **AI** | Self-hosted inference — Ollama running **Qwen3 14B / 8B**, **BGE-M3** embeddings (1024d) in pgvector, behind a FastAPI gateway with fast / standard / deep routing tiers; MCP server |
 | **Identity** | Keycloak — OIDC, JWT, RBAC |
 | **Data** | PostgreSQL 18 + pgvector, Redis, MinIO (S3), RabbitMQ (STOMP relay) |
-| **Third parties** | Stripe, GitHub / Slack OAuth, SMTP |
+| **Third parties** | Stripe, GitHub OAuth (Google planned), SMTP |
 | **Observability** | OpenTelemetry → SigNoz (ClickHouse) |
 | **Security** | OWASP ZAP (DAST), Trivy & Semgrep (SAST), distributed rate limiting |
 | **Delivery** | Docker Compose (dev / prod / tools), GitHub Actions, GHCR, Nginx, Render |
@@ -214,6 +220,7 @@ taskforce-fullstack/
 ├─ backend/          Spring Boot API (Java 21, Clean Architecture)
 ├─ frontend/         Next.js 16 app (React 19, TypeScript)
 ├─ landing-page/     Astro marketing site
+├─ ai-service/       AI gateway (FastAPI) → local Ollama runtime
 ├─ taskforce-mcp/    Model Context Protocol server
 ├─ keycloak/         Identity & access management
 ├─ nginx/            Reverse proxy / TLS gateway
@@ -238,6 +245,8 @@ taskforce-fullstack/
   between docs and code is flagged rather than hidden.
 - **Security by default** — OIDC/JWT via Keycloak, RBAC, distributed rate limiting, and
   automated DAST/SAST scanning (OWASP ZAP, Trivy, Semgrep).
+- **Self-hosted AI** — inference runs on a local Ollama runtime, so workspace content is
+  never sent to a third-party model provider.
 - **Observability built in** — OpenTelemetry traces, metrics and logs, collected in SigNoz.
 - **Tested against reality** — E2E runs Playwright against the full dockerized stack.
 - **Reproducible delivery** — the whole stack comes up with a single `docker compose`.
