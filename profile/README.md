@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img src="./assets/board.png" alt="TaskForce — project board with Smart Assign" width="94%" />
+  <img src="./assets/dashboard.png" alt="TaskForce — command center: projects, cycles and at-risk signals in one view" width="94%" />
 </p>
 
 ---
@@ -62,16 +62,8 @@ intent into shipped outcomes.**
 
 <table align="center">
   <tr>
-    <td width="50%"><img src="./assets/dashboard.png" alt="Dashboard" /><br/><sub><b>Command center</b> — projects, cycles and at-risk signals in one view</sub></td>
-    <td width="50%"><img src="./assets/analytics.png" alt="AI Insights" /><br/><sub><b>AI Insights</b> — throughput, capacity and risk, without building a report</sub></td>
-  </tr>
-  <tr>
-    <td><img src="./assets/board-smart-assign.png" alt="Smart Assign" /><br/><sub><b>Smart Assign</b> — the right owner for an issue, in one click</sub></td>
-    <td><img src="./assets/brain-os-graph.png" alt="Brain OS graph" /><br/><sub><b>Brain OS</b> — the workspace knowledge as a navigable graph</sub></td>
-  </tr>
-  <tr>
-    <td><img src="./assets/roadmap.png" alt="Roadmap" /><br/><sub><b>Roadmap</b> — cycles and delivery across time</sub></td>
-    <td><img src="./assets/members-rebalance.png" alt="Members workload" /><br/><sub><b>Members</b> — real workload balance and one-click rebalancing</sub></td>
+    <td width="58%" valign="top"><img src="./assets/onboarding.png" alt="Guided onboarding — building a member's skill profile" /><br/><sub><b>Guided onboarding</b> — builds each member's skill profile, which is what powers Smart Assign</sub></td>
+    <td width="42%" valign="top"><img src="./assets/smart-assign.png" alt="Smart Assign — best match with a transparent score" /><br/><sub><b>Smart Assign</b> — the right owner for an issue, with a transparent, decomposed score</sub></td>
   </tr>
 </table>
 
