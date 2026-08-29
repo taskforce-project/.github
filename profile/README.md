@@ -1,19 +1,17 @@
-<h1 align="center">TaskForce</h1>
-
 <p align="center">
-  <b>Describe the outcome. TaskForce orchestrates the execution.</b><br/>
-  <sub>The execution layer that sits over the tools your team already uses — it understands the work, drives the tools, and helps you decide.</sub>
+  <img src="./assets/hero-banner.svg" alt="TaskForce — describe the outcome, TaskForce orchestrates the execution" width="100%" />
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-beta-f59e0b?style=flat-square" alt="Beta" />
   <img src="https://img.shields.io/badge/backend-Java%2021%20·%20Spring%20Boot%204-111827?style=flat-square" alt="Backend" />
   <img src="https://img.shields.io/badge/frontend-Next.js%2016%20·%20React%2019-111827?style=flat-square" alt="Frontend" />
+  <img src="https://img.shields.io/badge/AI-self--hosted%20·%20Ollama-16a34a?style=flat-square" alt="Self-hosted AI" />
   <img src="https://img.shields.io/badge/infra-Docker%20·%20Keycloak%20·%20PostgreSQL-111827?style=flat-square" alt="Infra" />
 </p>
 
 <p align="center">
-  <img src="./assets/brain-os-graph.png" alt="TaskForce — Brain OS knowledge graph" width="90%" />
+  <img src="./assets/board.png" alt="TaskForce — project board with Smart Assign" width="94%" />
 </p>
 
 ---
@@ -62,10 +60,20 @@ intent into shipped outcomes.**
 **On the roadmap (framed as direction, not shipped):** autonomous multi-agent execution
 (*Agents*), real-time messaging (*Messages*, *Discussions*).
 
-<p align="center">
-  <img src="./assets/dashboard.png" alt="TaskForce dashboard" width="49%" />
-  <img src="./assets/smart-assign.png" alt="TaskForce Smart Assign" width="49%" />
-</p>
+<table align="center">
+  <tr>
+    <td width="50%"><img src="./assets/dashboard.png" alt="Dashboard" /><br/><sub><b>Command center</b> — projects, cycles and at-risk signals in one view</sub></td>
+    <td width="50%"><img src="./assets/analytics.png" alt="AI Insights" /><br/><sub><b>AI Insights</b> — throughput, capacity and risk, without building a report</sub></td>
+  </tr>
+  <tr>
+    <td><img src="./assets/board-smart-assign.png" alt="Smart Assign" /><br/><sub><b>Smart Assign</b> — the right owner for an issue, in one click</sub></td>
+    <td><img src="./assets/brain-os-graph.png" alt="Brain OS graph" /><br/><sub><b>Brain OS</b> — the workspace knowledge as a navigable graph</sub></td>
+  </tr>
+  <tr>
+    <td><img src="./assets/roadmap.png" alt="Roadmap" /><br/><sub><b>Roadmap</b> — cycles and delivery across time</sub></td>
+    <td><img src="./assets/members-rebalance.png" alt="Members workload" /><br/><sub><b>Members</b> — real workload balance and one-click rebalancing</sub></td>
+  </tr>
+</table>
 
 ---
 
