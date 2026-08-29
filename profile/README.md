@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/hero-banner.svg" alt="TaskForce — describe the outcome, TaskForce orchestrates the execution" width="100%" />
+  <img src="./assets/hero-banner.png" alt="TaskForce — describe the outcome, TaskForce orchestrates the execution" width="100%" />
 </p>
 
 <p align="center">
