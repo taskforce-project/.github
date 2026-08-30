@@ -1,5 +1,15 @@
+<br />
+
 <p align="center">
-  <img src="./assets/hero-banner.png" alt="TaskForce — describe the outcome, TaskForce orchestrates the execution" width="100%" />
+  <img src="./assets/hero-blue.png" alt="TaskForce — describe the outcome, TaskForce orchestrates the execution" width="100%" />
+</p>
+
+<p align="center"><b>The AI execution layer for teams that ship.</b></p>
+
+<p align="center">
+  <a href="https://taskforce-project.fr"><b>Website</b></a> •
+  <a href="https://app.taskforce-project.fr"><b>Live app</b></a> •
+  <a href="https://github.com/taskforce-project/taskforce-docs"><b>Documentation</b></a>
 </p>
 
 <p align="center">
@@ -11,65 +21,81 @@
 </p>
 
 <p align="center">
-  <img src="./assets/dashboard.png" alt="TaskForce — command center: projects, cycles and at-risk signals in one view" width="94%" />
+  <img src="./assets/dashboard.png" alt="TaskForce command center — projects, cycles and at-risk signals in one view" width="100%" />
 </p>
 
----
+Meet **TaskForce** — the layer that sits on top of the tools a team already uses (Linear,
+Notion, GitHub, Claude) and turns intent into shipped outcomes. Project tools *track* work;
+TaskForce is the layer that *understands* it.
 
-## What it is
-
-Project tools **track** work. TaskForce is the layer that **understands** it.
-
-Teams already have Linear, Notion, GitHub, Claude — they work, and nobody switches.
-Project management is a solved, crowded market; the value isn't in rebuilding it. The gap
-is that **nothing understands the work across those tools** — what a project is really
-about, where the expertise lives, which action moves it forward, and what a decision will
-cost two steps down the line.
-
-TaskForce sits on top of the tools a team already uses and:
-
-- **orchestrates the flow** between them and the AI that acts on them — Linear ↔ Claude —
-  so no one has to leave their tools;
-- **understands the stakes** of each project and **concentrates its context and expertise**
-  into one model;
-- **drives the tools** that move work forward, and **supports decisions** — down to
-  predicting the consequences of a decision before it is made.
+The market is solved and crowded, and nobody switches — so the value isn't in rebuilding a
+project manager. The gap is that **nothing understands the work across those tools**: what a
+project is really about, where the expertise lives, which action moves it forward, and what
+a decision will cost two steps down the line. TaskForce **orchestrates the flow** between a
+team's tools and the AI that acts on them, **concentrates each project's context** into one
+model, and **supports decisions** — down to predicting their consequences before they're made.
 
 That intelligence core is **Brain OS**: a persistent, navigable model of a project — its
 knowledge, its history, the consequences of past actions — that a human and an agent can
-reason over alike. Not a project-management clone, not an ERP: **the layer that turns
-intent into shipped outcomes.**
+reason over alike.
 
 > **Status — beta, and evolving.** What runs end-to-end today is a working, dockerized
-> workspace (not yet publicly hosted — the screenshots below are real). The orchestration
-> and decision-intelligence layer described here is the direction Brain OS is driving
-> toward, not a shipped feature. Capability, never traction.
+> workspace, deployed and reachable — the screenshots below are real. The full orchestration
+> and decision-intelligence layer is the direction Brain OS is driving toward, not a shipped
+> feature. Capability, never traction.
 
 ---
 
-## What ships today
+## 🌟 What ships today
 
 | | Capability | What it does |
 | --- | --- | --- |
 | 🧭 | **One workspace** | Projects, cycles, issues, backlog, roadmap, pages and analytics in one place — board, list and roadmap views. |
-| 🤖 | **Smart Assign** | Recommends the right owner for each open issue by skill, current workload and history — assignment becomes one click instead of a planning meeting. |
+| 🤖 | **Smart Assign** | Recommends the right owner for each open issue by skill, current workload and history — a transparent, decomposed score instead of a planning meeting. |
 | 📊 | **AI Insights** | An executive read on throughput, capacity and what is at risk, generated without anyone building a report. |
 | 💬 | **Ask AI** | A contextual assistant that answers from the team's real workspace, not a generic chat. |
 | 🧠 | **Brain OS** | The workspace's knowledge as a navigable graph — readable by a human and by an agent alike. |
 
-**On the roadmap (framed as direction, not shipped):** autonomous multi-agent execution
-(*Agents*), real-time messaging (*Messages*, *Discussions*).
+---
 
-<table align="center">
-  <tr>
-    <td width="58%" valign="top"><img src="./assets/onboarding.png" alt="Guided onboarding — building a member's skill profile" /><br/><sub><b>Guided onboarding</b> — builds each member's skill profile, which is what powers Smart Assign</sub></td>
-    <td width="42%" valign="top"><img src="./assets/smart-assign.png" alt="Smart Assign — best match with a transparent score" /><br/><sub><b>Smart Assign</b> — the right owner for an issue, with a transparent, decomposed score</sub></td>
-  </tr>
-</table>
+## 📸 Screenshots
+
+<p align="center">
+  <img src="./assets/board.png" width="100%" alt="Project board — backlog, cycles and issues" />
+</p>
+<p align="center"><sub><b>Board</b> — backlog, cycles and issues across a project, Smart Assign one click away.</sub></p>
+
+<br />
+
+<p align="center">
+  <img src="./assets/brain.png" width="100%" alt="Brain OS — the workspace knowledge as a navigable graph" />
+</p>
+<p align="center"><sub><b>Brain OS</b> — the workspace knowledge as a navigable graph, readable by a human and an agent alike.</sub></p>
+
+<br />
+
+<p align="center">
+  <img src="./assets/roadmap.png" width="100%" alt="Roadmap — cycles and delivery across time" />
+</p>
+<p align="center"><sub><b>Roadmap</b> — cycles and delivery across time, all projects on one timeline.</sub></p>
+
+<br />
+
+<p align="center">
+  <img src="./assets/members.png" width="100%" alt="Members — roles, skills and workload" />
+</p>
+<p align="center"><sub><b>Members</b> — roles, skills and real workload balance — the profile that powers Smart Assign.</sub></p>
+
+<br />
+
+<p align="center">
+  <img src="./assets/my-work.png" width="100%" alt="My work — every issue assigned to you across projects" />
+</p>
+<p align="center"><sub><b>My work</b> — every issue, sprint and page assigned to or recently edited by you.</sub></p>
 
 ---
 
-## System architecture
+## 🏗️ System architecture
 
 A multi-tenant monorepo. Identity is delegated to Keycloak; the frontend talks to the API
 over REST with a bearer JWT for commands and over **WebSocket/STOMP** for anything
@@ -147,12 +173,12 @@ flowchart TB
 | **Data** | PostgreSQL 18 + pgvector, Redis, MinIO (S3), RabbitMQ (STOMP relay) |
 | **Third parties** | Stripe, GitHub OAuth (Google planned), SMTP |
 | **Observability** | OpenTelemetry → SigNoz (ClickHouse) |
-| **Security** | OWASP ZAP (DAST), Trivy & Semgrep (SAST), distributed rate limiting |
+| **Security** | OWASP ZAP (DAST), Trivy & Semgrep (SAST), CodeQL, distributed rate limiting |
 | **Delivery** | Docker Compose (dev / prod / tools), GitHub Actions, GHCR, Nginx, Render |
 
 ---
 
-## Delivery pipeline
+## 🚀 Delivery pipeline
 
 Every pull request runs the full quality gate — including **end-to-end tests against a
 real Docker stack**, not mocks.
@@ -164,7 +190,7 @@ flowchart LR
     CI --> BT["Backend<br/>JUnit · JaCoCo"]
     CI --> FT["Frontend<br/>ESLint · Jest"]
     CI --> E2E["E2E · Playwright<br/>full Docker stack + seed"]
-    CI --> SEC["Security<br/>Trivy · Semgrep · OWASP ZAP"]
+    CI --> SEC["Security<br/>Trivy · Semgrep · CodeQL · ZAP"]
 
     BT --> COV["Codecov"]
     BT --> REL
@@ -182,7 +208,28 @@ flowchart LR
 
 ---
 
-## How the project is run
+<p align="center">
+  <img src="./assets/whats-next.png" alt="Labs · What's next — the road to v2, an AI Delivery OS" width="100%" />
+</p>
+
+## 🔭 What's next
+
+TaskForce v1 ships the **execution layer**. v2 turns it **autonomous** — an evolution, not a
+rewrite: the AI engine is already ~80% Java, and the same self-hosted inference drives it.
+
+- **Autonomous execution** — the orchestration layer stops suggesting and starts doing:
+  multi-agent runs that open PRs, update issues and move work forward under human review.
+- **Brain OS, Phase 4** — from a navigable knowledge graph to a *world model*: simulate the
+  consequences of a decision two steps ahead, before anyone commits to it.
+- **Still self-hosted, still private** — the same local Ollama inference, now driving the
+  loop end to end. No data leaves the machine.
+
+> Direction, not a shipped feature. The v2 specs and R&D live in the
+> [docs vault](https://github.com/taskforce-project/taskforce-docs).
+
+---
+
+## 🔁 How the project is run
 
 Three repositories, one loop: the product generates reality, the knowledge base captures
 and challenges it, and the studio turns it into narrative.
@@ -205,7 +252,7 @@ flowchart LR
 
 ---
 
-## Repositories
+## 📦 Repositories
 
 | Repo | What's inside |
 | --- | --- |
@@ -231,25 +278,34 @@ taskforce-fullstack/
 └─ docker-compose.{dev,prod,tools}.yml
 ```
 
-> **Brain OS (R&D)** — the research arm behind TaskForce: a persistent-memory architecture
-> for LLM agents (knowledge graph + vector search) and a *world model* that represents the
-> consequences of an agent's actions.
-
 ---
 
-## Engineering approach
+## 🧭 Engineering approach
 
 - **Clean Architecture** and a multi-tenant domain model from the start.
 - **Documentation as a system**, not an afterthought — an AI-assisted, human-reviewed
   knowledge vault where every technical claim is traced back to the code, and divergence
   between docs and code is flagged rather than hidden.
 - **Security by default** — OIDC/JWT via Keycloak, RBAC, distributed rate limiting, and
-  automated DAST/SAST scanning (OWASP ZAP, Trivy, Semgrep).
+  automated DAST/SAST scanning (OWASP ZAP, Trivy, Semgrep, CodeQL).
 - **Self-hosted AI** — inference runs on a local Ollama runtime, so workspace content is
   never sent to a third-party model provider.
 - **Observability built in** — OpenTelemetry traces, metrics and logs, collected in SigNoz.
 - **Tested against reality** — E2E runs Playwright against the full dockerized stack.
 - **Reproducible delivery** — the whole stack comes up with a single `docker compose`.
+
+---
+
+## ⚙️ Built with
+
+[![Java](https://img.shields.io/badge/Java%2021-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot%204-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Next.js](https://img.shields.io/badge/Next.js%2016-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React%2019-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL%2018-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Keycloak](https://img.shields.io/badge/Keycloak-4D4D4D?style=for-the-badge&logo=keycloak&logoColor=white)](https://www.keycloak.org/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
 ---
 
